@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/components/accountsview.tsx","./src/components/cashflowstatementview.tsx","./src/components/dashboardview.tsx","./src/components/googlesheetsmodal.tsx","./src/components/ledgerview.tsx","./src/components/transactionmodal.tsx","./src/data/initialdata.ts","./src/utils/formatters.ts"],"version":"5.6.3"}
