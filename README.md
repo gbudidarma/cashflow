@@ -2,6 +2,8 @@
 
 > **End-to-end Personal & Business cash flow management web app with an executive analytics dashboard, chronological running-balance ledger, multi-wallet reconciliation, Direct-Method Cash Flow Statement, and 2-way Google Sheets sync.**
 
+🌐 **Live App (GitHub Pages):** [https://gbudidarma.github.io/cashflow/](https://gbudidarma.github.io/cashflow/)
+
 ## Overview
 
 **CashFlow** helps individuals, freelancers, and business owners track every dollar or rupiah from initial invoice or paycheck all the way to settled bank and wallet balances. Switch seamlessly between **Personal**, **Business**, and **Combined** workspaces while keeping your data synced with **Google Sheets**.
