@@ -12,6 +12,7 @@ import {
   Plus,
   Repeat,
   Download,
+  Wallet,
 } from 'lucide-react';
 import {
   Account,
@@ -51,6 +52,7 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
   const [accountFilter, setAccountFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const accountMap = useMemo(
     () => new Map(accounts.map((a) => [a.id, a])),
@@ -122,29 +124,61 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
-      {/* Filter & Search Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Search Input */}
+    <div className="space-y-4 sm:space-y-5">
+      {/* Search & Filter Header */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3.5 sm:p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {/* Search Box */}
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search payee, client, invoice #, category, or memo..."
+              placeholder="Search payee, invoice #, category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-4 py-2 text-base sm:text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
-          {/* Filter Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mr-1">
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                showFilters || accountFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all'
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
+                  : 'border-slate-800 bg-slate-950 text-slate-300'
+              }`}
+            >
               <Filter className="h-3.5 w-3.5" />
-              Filters:
-            </div>
+              <span>Filters</span>
+              {(accountFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all') && (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              )}
+            </button>
 
+            <button
+              onClick={handleDownloadCSV}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
+              title="Export CSV"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">CSV</span>
+            </button>
+
+            <button
+              onClick={onOpenNewTransaction}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20 transition"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Cash</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Collapsible Filter Dropdowns */}
+        {(showFilters || accountFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all') && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 animate-in fade-in duration-150">
             <select
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
@@ -178,60 +212,168 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
               <option value="cleared">Cleared Only</option>
               <option value="pending">Pending / Scheduled</option>
             </select>
-
-            <button
-              onClick={handleDownloadCSV}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
-            >
-              <Download className="h-3.5 w-3.5" />
-              CSV
-            </button>
-
-            <button
-              onClick={onOpenNewTransaction}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New Entry
-            </button>
           </div>
-        </div>
+        )}
 
-        {/* Filtered Totals Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-800/80 pt-3 text-xs">
+        {/* Filtered Mini Summary Strip */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80 pt-2.5 text-[11px] sm:text-xs">
           <div className="text-slate-400">
-            Showing <span className="font-semibold text-white">{filteredEntries.length}</span>{' '}
-            cash flow entries with live running balance
+            <span className="font-semibold text-white">{filteredEntries.length}</span> entries with running balance
           </div>
-          <div className="flex flex-wrap items-center gap-5">
-            <div>
-              <span className="text-slate-400">Filtered Inflows: </span>
-              <span className="font-semibold text-emerald-400">
-                +{formatCurrency(summary.totalIn, currency)}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400">Filtered Outflows: </span>
-              <span className="font-semibold text-rose-400">
-                -{formatCurrency(summary.totalOut, currency)}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400">Net Filtered Flow: </span>
-              <span
-                className={`font-bold ${
-                  summary.net >= 0 ? 'text-emerald-300' : 'text-rose-300'
-                }`}
-              >
-                {formatCurrency(summary.net, currency, true)}
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            <span className="text-emerald-400 font-medium">+{formatCurrency(summary.totalIn, currency)}</span>
+            <span className="text-rose-400 font-medium">-{formatCurrency(summary.totalOut, currency)}</span>
+            <span className={`font-bold ${summary.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+              Net {formatCurrency(summary.net, currency, true)}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Ledger Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 overflow-hidden shadow-xl">
+      {/* MOBILE FEED VIEW (Optimized cards for Phone screens < 768px) */}
+      <div className="block md:hidden space-y-2.5">
+        {filteredEntries.length === 0 ? (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 text-center text-slate-400 space-y-3">
+            <Wallet className="h-8 w-8 mx-auto text-slate-600" />
+            <div className="text-sm font-semibold text-white">No transactions recorded yet</div>
+            <p className="text-xs text-slate-400 max-w-xs mx-auto">
+              Tap the green "+" button below to log your first income, expense, or wallet transfer!
+            </p>
+            <button
+              onClick={onOpenNewTransaction}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-600/20"
+            >
+              <Plus className="h-4 w-4" />
+              Add Transaction
+            </button>
+          </div>
+        ) : (
+          filteredEntries.map((tx) => {
+            const fromAcc = accountMap.get(tx.accountId);
+            const toAcc = tx.toAccountId ? accountMap.get(tx.toAccountId) : undefined;
+
+            return (
+              <div
+                key={tx.id}
+                className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 space-y-2.5 shadow-md active:bg-slate-900 transition"
+              >
+                {/* Top Row: Icon, Counterparty, and Amount */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 mt-0.5 ${
+                        tx.type === 'inflow'
+                          ? 'bg-emerald-500/15 text-emerald-400'
+                          : tx.type === 'outflow'
+                          ? 'bg-rose-500/15 text-rose-400'
+                          : 'bg-blue-500/15 text-blue-400'
+                      }`}
+                    >
+                      {tx.type === 'inflow' ? (
+                        <ArrowDownLeft className="h-4 w-4" />
+                      ) : tx.type === 'outflow' ? (
+                        <ArrowUpRight className="h-4 w-4" />
+                      ) : (
+                        <ArrowLeftRight className="h-4 w-4" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-white truncate flex items-center gap-1.5">
+                        <span className="truncate">{tx.counterparty}</span>
+                        {tx.isRecurring && (
+                          <span title="Recurring" className="text-emerald-400 shrink-0">
+                            <Repeat className="h-3 w-3" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                        <span>{formatDate(tx.date)}</span>
+                        <span>•</span>
+                        <span className="text-slate-300">{tx.category}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amount */}
+                  <div className="text-right shrink-0">
+                    <div
+                      className={`text-sm sm:text-base font-bold ${
+                        tx.type === 'inflow'
+                          ? 'text-emerald-400'
+                          : tx.type === 'outflow'
+                          ? 'text-rose-400'
+                          : 'text-blue-400'
+                      }`}
+                    >
+                      {tx.type === 'inflow' ? '+' : tx.type === 'outflow' ? '-' : '↔'}
+                      {formatCurrency(tx.amount, currency)}
+                    </div>
+                    {tx.status === 'cleared' ? (
+                      <div className="text-[10px] font-mono text-slate-400">
+                        Bal: {formatCurrency(tx.runningBalance, currency)}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] italic text-amber-400 font-medium">
+                        Pending
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sub-row: Account & Status Badge & Actions */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+                  <div className="flex items-center gap-2 truncate text-slate-400">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: fromAcc?.color || '#10b981' }}
+                    />
+                    <span className="truncate">
+                      {tx.type === 'transfer' ? `${fromAcc?.name} → ${toAcc?.name}` : fromAcc?.name}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {tx.status === 'cleared' ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300 border border-emerald-500/20">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Cleared
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onMarkCleared(tx.id)}
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-medium text-amber-300 active:scale-95"
+                      >
+                        <Clock className="h-3 w-3" />
+                        Settle
+                      </button>
+                    )}
+
+                    <div className="flex items-center gap-1 text-slate-400">
+                      <button
+                        onClick={() => onEditTransaction(tx)}
+                        className="p-1 rounded hover:bg-slate-800 hover:text-white"
+                        aria-label="Edit"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteTransaction(tx.id)}
+                        className="p-1 rounded hover:bg-rose-500/20 hover:text-rose-400"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW (Visible on tablet & desktop >= 768px) */}
+      <div className="hidden md:block rounded-2xl border border-slate-800 bg-slate-900/70 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -250,15 +392,13 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
               {filteredEntries.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-500">
-                    No matching transactions found. Click "New Entry" to record a cash flow item.
+                    No transactions recorded yet. Click "Add Cash" to record your first entry.
                   </td>
                 </tr>
               ) : (
                 filteredEntries.map((tx) => {
                   const fromAcc = accountMap.get(tx.accountId);
-                  const toAcc = tx.toAccountId
-                    ? accountMap.get(tx.toAccountId)
-                    : undefined;
+                  const toAcc = tx.toAccountId ? accountMap.get(tx.toAccountId) : undefined;
 
                   return (
                     <tr
@@ -411,14 +551,14 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
                           <button
                             onClick={() => onEditTransaction(tx)}
                             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-                            title="Edit transaction"
+                            title="Edit"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => onDeleteTransaction(tx.id)}
                             className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition"
-                            title="Delete transaction"
+                            title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>

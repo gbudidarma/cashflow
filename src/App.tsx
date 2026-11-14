@@ -33,7 +33,7 @@ import { CashFlowStatementView } from './components/CashFlowStatementView';
 import { TransactionModal } from './components/TransactionModal';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 
-const STORAGE_KEY = 'cashflow_pro_state_v1';
+const STORAGE_KEY = 'cashflow_pro_state_v2';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<
@@ -44,11 +44,18 @@ export function App() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          accounts: parsed.accounts?.length > 0 ? parsed.accounts : INITIAL_ACCOUNTS,
+          transactions: parsed.transactions || [],
+          budgets: parsed.budgets || [],
+        };
       }
     } catch (e) {
       console.error('Failed to load state from localStorage:', e);
     }
+    // Clean initial state with NO example transactions
     return {
       workspace: 'all',
       currency: 'USD',
@@ -153,17 +160,13 @@ export function App() {
         setState((prev) => ({
           ...prev,
           transactions:
-            Array.isArray(data.transactions) && data.transactions.length > 0
-              ? data.transactions
-              : prev.transactions,
+            Array.isArray(data.transactions) ? data.transactions : prev.transactions,
           accounts:
             Array.isArray(data.accounts) && data.accounts.length > 0
               ? data.accounts
               : prev.accounts,
           budgets:
-            Array.isArray(data.budgets) && data.budgets.length > 0
-              ? data.budgets
-              : prev.budgets,
+            Array.isArray(data.budgets) ? data.budgets : prev.budgets,
           sheetsConfig: {
             ...prev.sheetsConfig,
             syncStatus: 'connected',
@@ -303,30 +306,108 @@ export function App() {
     setState((prev) => ({ ...prev, transactions: updated }));
   };
 
-  const handleResetDemo = () => {
-    setState((prev) => ({
-      ...prev,
-      accounts: INITIAL_ACCOUNTS,
-      transactions: INITIAL_TRANSACTIONS,
-      budgets: INITIAL_BUDGETS,
-    }));
-  };
-
-  const handleClearTransactions = () => {
-    setState((prev) => ({
-      ...prev,
-      transactions: [],
-    }));
+  const handleClearAllData = () => {
+    if (window.confirm('Are you sure you want to clear all data and start completely fresh?')) {
+      setState({
+        workspace: 'all',
+        currency: 'USD',
+        accounts: INITIAL_ACCOUNTS,
+        transactions: [],
+        budgets: [],
+        sheetsConfig: {
+          webAppUrl: '',
+          autoSync: true,
+          syncStatus: 'disconnected',
+        },
+      });
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('cashflow_pro_state_v1');
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 pb-24 md:pb-10">
       {/* Top Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between py-3.5 gap-3">
+      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md pt-safe">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          {/* Mobile Top Header (Clean single bar on mobile) */}
+          <div className="flex md:hidden items-center justify-between py-2.5 gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20">
+                CF
+              </div>
+              <span className="text-sm font-bold tracking-tight text-white">
+                CashFlow
+              </span>
+            </div>
+
+            {/* Mobile Workspace Switcher */}
+            <div className="flex items-center rounded-lg bg-slate-900 p-0.5 border border-slate-800">
+              <button
+                onClick={() => handleSetWorkspace('all')}
+                className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                  state.workspace === 'all'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-400'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => handleSetWorkspace('personal')}
+                className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                  state.workspace === 'personal'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-slate-400'
+                }`}
+              >
+                Pers
+              </button>
+              <button
+                onClick={() => handleSetWorkspace('business')}
+                className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                  state.workspace === 'business'
+                    ? 'bg-cyan-600 text-white'
+                    : 'text-slate-400'
+                }`}
+              >
+                Biz
+              </button>
+            </div>
+
+            {/* Mobile Right Controls: Google Sheets & Currency */}
+            <div className="flex items-center gap-1.5">
+              <select
+                value={state.currency}
+                onChange={(e) => handleSetCurrency(e.target.value as CurrencyCode)}
+                className="rounded-lg border border-slate-800 bg-slate-900 px-1.5 py-1 text-[11px] font-medium text-slate-200"
+              >
+                <option value="USD">$</option>
+                <option value="IDR">Rp</option>
+                <option value="EUR">€</option>
+                <option value="SGD">S$</option>
+                <option value="GBP">£</option>
+                <option value="AUD">A$</option>
+              </select>
+
+              <button
+                onClick={() => setIsSheetsModalOpen(true)}
+                title="Google Sheets Sync"
+                className={`p-1.5 rounded-lg border transition ${
+                  state.sheetsConfig.syncStatus === 'connected'
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                    : 'border-slate-800 bg-slate-900 text-slate-300'
+                }`}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Top Header (Hidden on small mobile) */}
+          <div className="hidden md:flex items-center justify-between py-3.5 gap-3">
             {/* Brand & Workspace Switcher */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 text-white font-bold shadow-lg shadow-emerald-500/20">
                   CF
@@ -334,10 +415,10 @@ export function App() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-base font-bold tracking-tight text-white">
-                      CashFlow Pro
+                      CashFlow
                     </h1>
                     <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                      End-to-End Cash Tracker
+                      Live Cash Tracker
                     </span>
                   </div>
                   <p className="text-xs text-slate-400">
@@ -346,7 +427,7 @@ export function App() {
                 </div>
               </div>
 
-              {/* Dual Workspace Switcher */}
+              {/* Workspace Switcher */}
               <div className="flex items-center rounded-xl bg-slate-900 p-1 border border-slate-800">
                 <button
                   onClick={() => handleSetWorkspace('all')}
@@ -384,14 +465,12 @@ export function App() {
               </div>
             </div>
 
-            {/* Right Controls: Currency, Google Sheets Sync, Record Button */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Currency Selector */}
+            {/* Desktop Right Controls */}
+            <div className="flex items-center gap-2.5">
               <select
                 value={state.currency}
                 onChange={(e) => handleSetCurrency(e.target.value as CurrencyCode)}
                 className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 focus:border-emerald-500 focus:outline-none"
-                title="Display Currency"
               >
                 <option value="USD">USD ($)</option>
                 <option value="IDR">IDR (Rp)</option>
@@ -401,7 +480,6 @@ export function App() {
                 <option value="AUD">AUD (A$)</option>
               </select>
 
-              {/* Google Sheets Sync Button */}
               <button
                 onClick={() => setIsSheetsModalOpen(true)}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium transition ${
@@ -423,7 +501,6 @@ export function App() {
                 />
               </button>
 
-              {/* Primary CTA: Record Transaction */}
               <button
                 onClick={() => {
                   setEditingTx(null);
@@ -437,8 +514,8 @@ export function App() {
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1 overflow-x-auto pt-1 -mb-px">
+          {/* Desktop Navigation Tabs (Hidden on mobile, mobile uses bottom bar) */}
+          <nav className="hidden md:flex items-center gap-1 overflow-x-auto pt-1 -mb-px">
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-semibold whitespace-nowrap transition ${
@@ -460,7 +537,7 @@ export function App() {
               }`}
             >
               <ListOrdered className="h-4 w-4" />
-              Cash Flow Ledger & Running Balance
+              Cash Flow Ledger
               <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
                 {state.transactions.length}
               </span>
@@ -475,7 +552,7 @@ export function App() {
               }`}
             >
               <Wallet className="h-4 w-4" />
-              Accounts, Wallets & Budgets
+              Accounts & Wallets
             </button>
 
             <button
@@ -487,14 +564,14 @@ export function App() {
               }`}
             >
               <FileBarChart2 className="h-4 w-4" />
-              Cash Flow Statement (Direct Method)
+              Cash Flow Statement
             </button>
           </nav>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         {activeTab === 'dashboard' && (
           <DashboardView
             workspaceFilter={state.workspace}
@@ -559,31 +636,89 @@ export function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 px-4 sm:px-6 lg:px-8 mt-12">
+      {/* Desktop Footer (Hidden on Mobile) */}
+      <footer className="hidden md:block border-t border-slate-900 bg-slate-950 py-4 px-4 sm:px-6 lg:px-8 mt-12">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <div>
-            CashFlow Pro — Dual Personal & Business Cash Management with Google Sheets Sync
+            CashFlow — Dual Personal & Business Cash Management with Google Sheets Sync
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={handleResetDemo}
-              className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 transition"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Restore Sample Data
-            </button>
-            <span>•</span>
-            <button
-              onClick={handleClearTransactions}
+              onClick={handleClearAllData}
               className="inline-flex items-center gap-1 text-slate-400 hover:text-rose-400 transition"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Clear Transactions (Start Fresh)
+              Reset All Data (Clean Slate)
             </button>
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Navigation Bar (Fixed for Mobile Screens) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/90 px-3 py-1.5 pb-safe">
+        <div className="flex items-center justify-around relative">
+          {/* Dashboard Tab */}
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center justify-center py-1 px-2 transition ${
+              activeTab === 'dashboard' ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+            }`}
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            <span className="text-[10px] mt-0.5">Overview</span>
+          </button>
+
+          {/* Ledger Tab */}
+          <button
+            onClick={() => setActiveTab('ledger')}
+            className={`flex flex-col items-center justify-center py-1 px-2 relative transition ${
+              activeTab === 'ledger' ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+            }`}
+          >
+            <ListOrdered className="h-5 w-5" />
+            <span className="text-[10px] mt-0.5">Ledger</span>
+            {state.transactions.length > 0 && (
+              <span className="absolute top-0 right-1 h-3.5 min-w-[14px] px-1 rounded-full bg-emerald-500 text-slate-950 font-bold text-[9px] flex items-center justify-center">
+                {state.transactions.length}
+              </span>
+            )}
+          </button>
+
+          {/* Floating Central Action Button (+) */}
+          <button
+            onClick={() => {
+              setEditingTx(null);
+              setIsTxModalOpen(true);
+            }}
+            className="flex items-center justify-center h-12 w-12 -mt-5 rounded-full bg-emerald-500 text-slate-950 shadow-xl shadow-emerald-500/30 border-4 border-slate-950 active:scale-95 transition"
+            aria-label="Add transaction"
+          >
+            <Plus className="h-6 w-6 stroke-[2.5]" />
+          </button>
+
+          {/* Accounts Tab */}
+          <button
+            onClick={() => setActiveTab('accounts')}
+            className={`flex flex-col items-center justify-center py-1 px-2 transition ${
+              activeTab === 'accounts' ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+            }`}
+          >
+            <Wallet className="h-5 w-5" />
+            <span className="text-[10px] mt-0.5">Wallets</span>
+          </button>
+
+          {/* Statement Tab */}
+          <button
+            onClick={() => setActiveTab('statement')}
+            className={`flex flex-col items-center justify-center py-1 px-2 transition ${
+              activeTab === 'statement' ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+            }`}
+          >
+            <FileBarChart2 className="h-5 w-5" />
+            <span className="text-[10px] mt-0.5">Statement</span>
+          </button>
+        </div>
+      </div>
 
       {/* Modals */}
       <TransactionModal

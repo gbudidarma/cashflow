@@ -131,13 +131,13 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
     data: ReturnType<typeof buildActivitySection>
   ) => (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/70 overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-4 sm:px-6 py-3 sm:py-4">
         <div>
-          <h3 className="text-sm font-bold text-white">{title}</h3>
-          <p className="text-xs text-slate-400">{subtitle}</p>
+          <h3 className="text-xs sm:text-sm font-bold text-white">{title}</h3>
+          <p className="text-[11px] text-slate-400">{subtitle}</p>
         </div>
         <div
-          className={`text-sm font-bold font-mono ${
+          className={`text-xs sm:text-sm font-bold font-mono ml-2 shrink-0 ${
             data.net >= 0 ? 'text-emerald-400' : 'text-rose-400'
           }`}
         >
@@ -145,25 +145,25 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
         </div>
       </div>
 
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Cash Receipts / Inflows */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-2">
             <span className="flex items-center gap-1.5">
               <ArrowDownLeft className="h-3.5 w-3.5" /> Cash Receipts (Inflows)
             </span>
             <span>+{formatCurrency(data.totalIn, currency)}</span>
           </div>
           {data.inflows.length === 0 ? (
-            <p className="text-xs text-slate-500 py-2">No cleared inflows</p>
+            <p className="text-xs text-slate-500 py-1.5">No cleared receipts</p>
           ) : (
             data.inflows.map((item) => (
               <div
                 key={item.category}
                 className="flex items-center justify-between text-xs py-1"
               >
-                <span className="text-slate-300">{item.category}</span>
-                <span className="font-mono font-medium text-emerald-300">
+                <span className="text-slate-300 truncate mr-2">{item.category}</span>
+                <span className="font-mono font-medium text-emerald-300 shrink-0">
                   +{formatCurrency(item.amount, currency)}
                 </span>
               </div>
@@ -172,23 +172,23 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
         </div>
 
         {/* Cash Payments / Outflows */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-rose-400 border-b border-slate-800 pb-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-rose-400 border-b border-slate-800 pb-2">
             <span className="flex items-center gap-1.5">
               <ArrowUpRight className="h-3.5 w-3.5" /> Cash Disbursements (Outflows)
             </span>
             <span>-{formatCurrency(data.totalOut, currency)}</span>
           </div>
           {data.outflows.length === 0 ? (
-            <p className="text-xs text-slate-500 py-2">No cleared outflows</p>
+            <p className="text-xs text-slate-500 py-1.5">No cleared disbursements</p>
           ) : (
             data.outflows.map((item) => (
               <div
                 key={item.category}
                 className="flex items-center justify-between text-xs py-1"
               >
-                <span className="text-slate-300">{item.category}</span>
-                <span className="font-mono font-medium text-rose-300">
+                <span className="text-slate-300 truncate mr-2">{item.category}</span>
+                <span className="font-mono font-medium text-rose-300 shrink-0">
                   -{formatCurrency(item.amount, currency)}
                 </span>
               </div>
@@ -200,39 +200,39 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header & Period Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-3.5 sm:p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 shrink-0">
             <FileBarChart2 className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">
-              Statement of Cash Flows (Direct Method)
+            <h2 className="text-sm sm:text-base font-bold text-white">
+              Statement of Cash Flows
             </h2>
-            <p className="text-xs text-slate-400">
-              End-to-end reconciliation of Operating, Investing, and Financing cash movements
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              Operating, Investing & Financing Direct Method
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
             onClick={() => onSelectMonth('ALL')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+            className={`rounded-lg px-2.5 py-1 text-xs font-medium whitespace-nowrap transition shrink-0 ${
               selectedMonth === 'ALL'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                 : 'text-slate-400 hover:bg-slate-800'
             }`}
           >
-            All Time Reconciliation
+            All Time
           </button>
           {availableMonths.map((m) => (
             <button
               key={m}
               onClick={() => onSelectMonth(m)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium whitespace-nowrap transition shrink-0 ${
                 selectedMonth === m
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                   : 'text-slate-400 hover:bg-slate-800'
@@ -246,46 +246,46 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
 
       {/* 3 Standard Cash Flow Sections */}
       {renderSection(
-        '1. Cash Flows from Operating Activities',
-        'Day-to-day revenue, salary, client retainers, payroll, rent, software & living expenses',
+        '1. Operating Activities',
+        'Revenue, payroll, client retainers, rent, living & software expenses',
         operating
       )}
 
       {renderSection(
-        '2. Cash Flows from Investing Activities',
-        'Capital expenditures (CapEx), hardware/equipment, stocks, and investment returns',
+        '2. Investing Activities',
+        'Equipment, hardware, capital purchases, and investment returns',
         investing
       )}
 
       {renderSection(
-        '3. Cash Flows from Financing Activities',
-        'Capital injections, owner draws/dividends, loan repayments & reserve allocations',
+        '3. Financing Activities',
+        'Owner draws, capital injections, reserve allocations & debt repayment',
         financing
       )}
 
       {/* Bottom Reconciliation Box */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 p-6">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-4">
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 p-4 sm:p-6">
+        <div className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-3 sm:mb-4">
           <Layers className="h-4 w-4" />
           Cash Position Proof & Reconciliation
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
-            <div className="text-xs text-slate-400">
-              Combined Opening Cash Balance
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3.5">
+            <div className="text-[11px] text-slate-400">
+              Opening Cash Balance
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-white">
+            <div className="mt-1 text-base sm:text-xl font-bold font-mono text-white">
               {formatCurrency(totalOpeningBalance, currency)}
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
-            <div className="text-xs text-slate-400">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3.5">
+            <div className="text-[11px] text-slate-400">
               Net Cash Movement ({selectedMonth === 'ALL' ? 'All Time' : selectedMonth})
             </div>
             <div
-              className={`mt-1 text-xl font-bold font-mono ${
+              className={`mt-1 text-base sm:text-xl font-bold font-mono ${
                 netCashChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
@@ -293,12 +293,12 @@ export const CashFlowStatementView: React.FC<CashFlowStatementViewProps> = ({
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
-            <div className="flex items-center justify-between text-xs text-emerald-200">
-              <span>Verified Closing Cash on Hand</span>
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3.5">
+            <div className="flex items-center justify-between text-[11px] text-emerald-200">
+              <span>Closing Cash on Hand</span>
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-white">
+            <div className="mt-1 text-base sm:text-xl font-bold font-mono text-white">
               {formatCurrency(totalClosingBalance, currency)}
             </div>
           </div>
